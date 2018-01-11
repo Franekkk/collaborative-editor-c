@@ -6,6 +6,11 @@ typedef struct BindingData {
     int       *serverSocket;
 } BindingData;
 
+struct TextViewWithSocket {
+    GtkTextView* textView;
+    int clientSocket;
+};
+
 void killClient() {
     clientIsWorking = FALSE;
 }

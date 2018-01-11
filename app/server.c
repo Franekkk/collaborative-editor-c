@@ -124,26 +124,38 @@ void add_new_socket_to_empty_client_slot(
     }
 }
 
-
-void broadcast_message(struct CollaborativeEditorServer *server, message_t message, int owner_socket_id) {
-    int size = sizeof(message_t);
+void send_message(message_t message, int socket) {
+    size_t size = sizeof(message_t);
     char* buffer = malloc(size);
     memset(buffer, 0x00, size);
     memcpy(buffer, &message, size);
 
+    send(socket, buffer, size, 0);
+
+    free(buffer);
+}
+
+void broadcast_message(struct CollaborativeEditorServer *server, message_t message, int owner_socket_id) {
     for (int i=0; i < MAX_CLIENTS; i++) {
         int client_socket = server->client_sockets[i];
         if (client_socket == 0 || i == owner_socket_id) {
             continue;
         }
 
-
-        send(client_socket, buffer, size, 0);
+        send_message(message, client_socket);
     }
-
-    free(buffer);
 }
 
+void initial_synchronization(struct CollaborativeEditorServer *server, int clientSocket) {
+    for (int i=0; i < LINES_LIMIT; i++) {
+        message_t message;
+        message.row = i;
+        strcpy(message.text, server->lines[i]);
+        message.type = LINE_MODIFIED;
+
+        send_message(message, clientSocket);
+    }
+}
 
 void handle_server_socket_activity(struct CollaborativeEditorServer *server) {
     //If something happened on the server socket, its an incoming connection
@@ -161,8 +173,7 @@ void handle_server_socket_activity(struct CollaborativeEditorServer *server) {
     }
 
     add_new_socket_to_empty_client_slot(server, new_socket);
-
-    // TODO: Send existing editor text
+    initial_synchronization(server, new_socket);
 }
 
 void handle_client_socket_activity(
@@ -227,7 +238,7 @@ void event_loop(struct CollaborativeEditorServer *server) {
 
 void initialize_text_content(struct CollaborativeEditorServer *server) {
     for (int i=0; i < LINES_LIMIT; i++) {
-        memset(server->lines[i], ' ', LINE_MAX_LENGTH + 1);
+        memset(server->lines[i], ' ', LINE_MAX_LENGTH);
         server->lines[i][LINE_MAX_LENGTH - 1] = '\0';
     }
 }

@@ -5,18 +5,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <time.h>fgfdg
-
+#include <time.h>
 #include <netdb.h>
 #include <stdlib.h>
 
 extern clientIsWorking = TRUE;
 
 void *gtkListener();
-
-void *incomingMessageListener();
-
-void eventLoops();
 
 char *messageToString(message_t *message);
 

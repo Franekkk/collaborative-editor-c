@@ -3,6 +3,8 @@
 #include "includes/common.h"
 #include "includes/prepares.h"
 #include "includes/bindings.h"
+#include "includes/login.h"
+
 
 int main(int argc, char *argv[]) {
     int serverSocket = connectToServer(HOST, PORT);
@@ -23,7 +25,11 @@ int main(int argc, char *argv[]) {
     gtk_widget_show_all(window);
     bindEventListeners(window, exit, buffer, statusbar, &serverSocket);
 
-    eventLoops();
+    struct TextViewWithSocket* textViewWithSocket = malloc(sizeof(struct TextViewWithSocket));
+    textViewWithSocket->textView = (GtkTextView*) textView;
+    textViewWithSocket->clientSocket = serverSocket;
+
+    eventLoops(textViewWithSocket);
 
     return 0;
 }
@@ -32,18 +38,49 @@ void *gtkListener() {
     gtk_main();
 }
 
-void *incomingMessageListener() {
-    while (clientIsWorking) {
-        // TODO: handle incoming message from server here
+void reloadText(GtkTextView* textView, char lines[LINES_LIMIT][LINE_MAX_LENGTH]) {
+    size_t size = LINES_LIMIT * LINE_MAX_LENGTH;
+    char *message = (char*) malloc(sizeof(char) * size);
+
+    for (int i=0; i < LINES_LIMIT; i++) {
+        strcat(message, lines[i]);
+        size_t len = strlen(message);
+
+        message[len] = '\n';
     }
+
+    GtkTextBuffer *buffer = gtk_text_view_get_buffer((GtkTextView*) textView);
+    gtk_text_buffer_set_text(buffer, message, strlen(message));
 }
 
-void eventLoops() {
+void *incomingMessageListener(struct TextViewWithSocket* textViewWithSocket) {
+    char lines[LINES_LIMIT][LINE_MAX_LENGTH];
+    for (int i=0; i < LINES_LIMIT; i++) {
+        strcpy(lines[i], "");
+    }
+
+    while (TRUE) {
+        size_t messageSize = sizeof(message_t);
+        char *socketBuffer = malloc(messageSize);
+
+        if (recv(textViewWithSocket->clientSocket, socketBuffer, messageSize, NULL) != -1) {
+            message_t receivedMessage;
+            memcpy(&receivedMessage, socketBuffer, messageSize);
+
+            strcpy(lines[receivedMessage.row], receivedMessage.text);
+            reloadText(textViewWithSocket->textView, lines);
+        }
+    }
+
+    free(textViewWithSocket);
+}
+
+void eventLoops(struct TextViewWithSocket* textViewWithSocket) {
     pthread_t thread[2];
 
     //starting the thread
     pthread_create(&thread[0], NULL, gtkListener, NULL);
-    pthread_create(&thread[1], NULL, incomingMessageListener, NULL);
+    pthread_create(&thread[1], NULL, incomingMessageListener, textViewWithSocket);
 
     //waiting for completion
     pthread_join(thread[0], NULL);
