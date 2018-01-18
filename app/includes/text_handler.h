@@ -1,9 +1,9 @@
 typedef struct Text {
-    char **lines;
+    char         **lines;
     unsigned int *linesNumber;
 } Text;
 
-void textModifyLine(Text * text, int row, char *line) {
+void textModifyLine(Text *text, int row, char *line) {
     char **text2 = malloc(*text->linesNumber * sizeof(char *));
 
     for (int i = 0; i < *text->linesNumber; i++) {
@@ -23,7 +23,7 @@ void textModifyLine(Text * text, int row, char *line) {
     text->lines = text2;
 }
 
-void textAddNewLine(Text * text, int row, char *line) {
+void textAddNewLine(Text *text, int row, char *line) {
     char **text2 = malloc(++*text->linesNumber * sizeof(char *));
 
     for (int i = 0; i < *text->linesNumber; i++) {
@@ -42,7 +42,7 @@ void textAddNewLine(Text * text, int row, char *line) {
     text->lines = text2;
 }
 
-void textRemoveLine(Text * text, int row) {
+void textRemoveLine(Text *text, int row) {
     char **text2 = malloc((*text->linesNumber)-- * sizeof(char *));
 
     for (int i = 0; i < *text->linesNumber + 1; i++) {
@@ -58,7 +58,7 @@ void textRemoveLine(Text * text, int row) {
 Text *textInit() {
     Text *text = malloc(sizeof(Text));
 
-    text->lines        = malloc(1 * sizeof(char[1]));
+    text->lines       = malloc(1 * sizeof(char[1]));
     text->linesNumber = malloc(sizeof(int));
 
     *text->linesNumber = 1;

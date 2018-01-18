@@ -47,8 +47,6 @@ static gboolean resolveIncomingMessage(struct TextViewWithSocket *textViewWithSo
     G_LOCK(lockParsingIncomingMessage); // TODO: a gówno to dało
     isServerSendingData = 1;
 
-    printf("%s\n", textViewWithSocket->lastReceivedMessage->text);
-
     GtkTextIter start, end;
     message_t *message = textViewWithSocket->lastReceivedMessage;
 
@@ -60,25 +58,41 @@ static gboolean resolveIncomingMessage(struct TextViewWithSocket *textViewWithSo
             isServerSendingData = 0;
             break;
         case LINE_ADDED:
+            printf("LINE_ADDED:%d:`%s`\n", message->row, message->text);
+//            if(1) {}
+//            char tmp[sizeof(message->text)+1];
+//            if (gtk_text_buffer_get_line_count(textViewWithSocket->textBuffer) < (message->row +1)) {
+//                getBoundsOfLine(textViewWithSocket->textBuffer, message->row - 1, &start, &end);
+//                strcpy(tmp, "\n");
+//                strcat(tmp, message->text);
+//            } else {
+//                gtk_text_iter_set_line(&end, message->row);
+//            }
+//            gtk_text_buffer_insert(textViewWithSocket->textBuffer, &end, tmp, strlen(message->text)+1);
+
 //            gtk_text_buffer_get_iter_at_line(textViewWithSocket->textBuffer, &start, message->row);
+            getBoundsOfLine(textViewWithSocket->textBuffer, message->row - 1, &start, &end);
+            gtk_text_buffer_insert(textViewWithSocket->textBuffer, &end, "\n ", 2);
             getBoundsOfLine(textViewWithSocket->textBuffer, message->row, &start, &end);
-            gtk_text_buffer_insert(textViewWithSocket->textBuffer, &end, "\n", 1);
-            gtk_text_buffer_get_iter_at_line(textViewWithSocket->textBuffer, &end, message->row + 1);
-            gtk_text_buffer_insert(textViewWithSocket->textBuffer, &end, message->text, strlen(message->text));
+//            gtk_text_buffer_get_iter_at_line(textViewWithSocket->textBuffer, &end, message->row);
+            gtk_text_buffer_insert(textViewWithSocket->textBuffer, &start, message->text, strlen(message->text));
 
             break;
         case LINE_REMOVED:
+            printf("LINE_REMOVED:%d:\n", message->row);
             gtk_text_buffer_get_iter_at_line(textViewWithSocket->textBuffer, &start, message->row);
             gtk_text_buffer_backspace(textViewWithSocket->textBuffer, &start, FALSE, TRUE);
 
             break;
         case LINE_MODIFIED:
-            gtk_text_buffer_get_iter_at_line(textViewWithSocket->textBuffer, &start, message->row);
+            printf("LINE_MODIFIED:%d:`%s`\n", message->row, message->text);
+//            gtk_text_buffer_get_iter_at_line(textViewWithSocket->textBuffer, &start, message->row);
 
             getBoundsOfLine(textViewWithSocket->textBuffer, message->row, &start, &end);
             gtk_text_buffer_delete(textViewWithSocket->textBuffer, &start, &end);
+            getBoundsOfLine(textViewWithSocket->textBuffer, message->row, &start, &end);
 
-            gtk_text_buffer_insert(textViewWithSocket->textBuffer, &end, message->text, strlen(message->text));
+            gtk_text_buffer_insert(textViewWithSocket->textBuffer, &start, message->text, strlen(message->text));
 
             break;
         default: break;

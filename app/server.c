@@ -73,13 +73,6 @@ void listen_on_socket(int master_socket) {
     }
 }
 
-//void print_text(struct CollaborativeEditorServer *server) {
-//    printf("Current text:\n");
-//    for (int i = 0; i < LINES_LIMIT; i++) {
-//        printf("[%d] %s\n", i, server->lines[i]);
-//    }
-//}
-
 int reset_fd_set(struct CollaborativeEditorServer *server) {
     //Clear the socket set. On each event loop iteration the fd_set has to
     // be destroyed and re-created

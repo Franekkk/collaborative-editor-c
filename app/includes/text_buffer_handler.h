@@ -61,6 +61,14 @@ gchar *getLineText(GtkTextBuffer *buffer, int lineNumber) {
     return gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
 }
 
+char* replace_char(char* str, char find, char replace){
+    char *current_pos = strchr(str,find);
+    while (current_pos){
+        *current_pos = replace;
+        current_pos = strchr(current_pos,find);
+    }
+    return str;
+}
 /**
  * @return The text of the line lineNumber from GtkTextBuffer *buffer.
  */
@@ -71,7 +79,14 @@ message_t *messageFromLineOfTextBuffer(GtkTextBuffer *buffer, enum MessageType t
     messageToSend->row  = lineNumber;
 
     char *lineText = type == LINE_REMOVED ? "" : getLineText(buffer, lineNumber);
-    if (/*type == LINE_ADDED && */lineText[0] == '\n') lineText = "";
+    if (type == LINE_ADDED && lineText[0] == '\n') lineText = "";
+    if (type == LINE_MODIFIED) {
+        if (lineText[0] == '\n') {
+            strcpy(lineText, " ");
+        } else {
+            replace_char(lineText, '\n', ' ');
+        }
+    }
 
     strcpy(messageToSend->text, lineText);
 
@@ -95,13 +110,13 @@ void sendModifiedLinesToServer(GtkTextBuffer *buffer, TextBufferData *data) {
                 messageFromLineOfTextBuffer(buffer, type, startingLine + i),
                 *(data->serverSocket)
             );
+            // flag that finished sending data in this loop
+            g_usleep(5*1000); //c'mon...
         } while (
             linesDiff != 0
             && (linesDiff > 0 ? (i++) : (i--)) != linesDiff
             );
 
-        // flag that finished sending data in this loop
-        g_usleep(5*1000); //c'mon...
         message_t message_last;
         message_last.row = -1;
         strcpy(message_last.text, "");
