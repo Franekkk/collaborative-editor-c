@@ -147,9 +147,6 @@ void setCurrentCursorLine(GtkTextBuffer *buffer, TextBufferData *data) {
     data->currentCursorLine = (int) getCursorCords(buffer, &start)[0];
     data->totalLines = (int) gtk_text_buffer_get_line_count(buffer);
 
-    // TODO: handle selection
-//    gtk_text_buffer_get_selection_bounds(buffer, &start, &end);
-
     updateStatusbar(buffer, GTK_STATUSBAR(data->statusbar));
 }
 

@@ -21,7 +21,6 @@ struct CollaborativeEditorServer {
 
     int  server_socket;
     Text *text;
-//    char lines[LINES_LIMIT][LINE_MAX_LENGTH];
 
     fd_set readingFileDescriptors;
 };
@@ -51,19 +50,18 @@ int create_server_socket() {
     return server_socket;
 }
 
-void initialize_address_structure(struct sockaddr_in *address) {
+void initialize_address_structure(struct sockaddr_in *address, char *host, int port) {
     address->sin_family      = AF_INET;
-    address->sin_addr.s_addr = inet_addr(HOST);
-    address->sin_port        = htons(PORT);
+    address->sin_addr.s_addr = inet_addr(host);
+    address->sin_port        = htons(port);
 }
 
 void bind_server_socket_to_port(int server_socket, struct sockaddr_in address) {
-    //bind the socket to localhost port 8888
     if (bind(server_socket, (struct sockaddr *) &address, sizeof(address)) < 0) {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
-    printf("Listening on port %d... \n", PORT);
+    printf("Listening on %s:%d... \n", inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 }
 
 void listen_on_socket(int master_socket) {
@@ -101,10 +99,7 @@ int reset_fd_set(struct CollaborativeEditorServer *server) {
     return highest_file_descriptor;
 }
 
-void add_new_socket_to_empty_client_slot(
-    struct CollaborativeEditorServer *server,
-    int new_socket
-) {
+void add_new_socket_to_empty_client_slot(struct CollaborativeEditorServer *server, int new_socket) {
     for (int i = 0; i < server->num_of_client_sockets; i++) {
         if (server->client_sockets[i] != 0) {
             continue;
@@ -117,8 +112,8 @@ void add_new_socket_to_empty_client_slot(
 }
 
 void send_message(message_t message, int socket) {
-    size_t size = sizeof(message_t);
-    char *buffer = malloc(size);
+    size_t size    = sizeof(message_t);
+    char   *buffer = malloc(size);
     memset(buffer, 0x00, size);
     memcpy(buffer, &message, size);
 
@@ -183,7 +178,7 @@ void resolveIncomingMessageFromClient(const struct CollaborativeEditorServer *se
         case LINE_ADDED: textAddNewLine(server->text, received_message->row, received_message->text); break;
         case LINE_REMOVED: textRemoveLine(server->text, received_message->row); break;
         case LINE_MODIFIED: textModifyLine(server->text, received_message->row, received_message->text); break;
-        default: break;
+        default:break;
     }
 }
 
@@ -195,7 +190,7 @@ void handle_client_socket_activity(
         return;
     }
 
-    int size = sizeof(message_t);
+    int  size    = sizeof(message_t);
     char *buffer = malloc(size);
     memset(buffer, 0x00, size);
 
@@ -222,7 +217,6 @@ void handle_client_socket_activity(
 
     resolveIncomingMessageFromClient(server, &received_message);
 
-    // print_text(server);
     received_message.lastCollaborator = client_socket;
     broadcast_message(server, received_message, socket_index);
 }
@@ -233,7 +227,6 @@ void handle_client_sockets_activity(struct CollaborativeEditorServer *server) {
         handle_client_socket_activity(server, i);
     }
 }
-
 
 void event_loop(struct CollaborativeEditorServer *server) {
     while (TRUE) {
@@ -268,9 +261,29 @@ void initialize_text_content(struct CollaborativeEditorServer *server) {
     textAddNewLine(server->text, 9, "9. ostatnio z zawierającym różne wersje Lorem Ipsum oprogramowaniem");
 }
 
+char *host(int argc, char **argv) {
+    size_t x;
+    if (argc < 2 || !(x = strlen(argv[1]))) {
+        x = strlen(HOST);
+    }
+
+    char *host = malloc(x * sizeof(char));
+    strcpy(host, (argc > 1 ? argv[1] : HOST));
+
+    return host;
+}
+
+int port(int argc, char **argv) {
+    return (argc > 2 ? atoi(argv[2]) : PORT);
+}
+
 int main(int argc, char *argv[]) {
     struct sockaddr_in address;
-    initialize_address_structure(&address);
+    initialize_address_structure(
+        &address,
+        host(argc, argv),
+        port(argc, argv)
+    );
 
     int client_sockets[MAX_CLIENTS];
     initialize_client_sockets(client_sockets, MAX_CLIENTS);

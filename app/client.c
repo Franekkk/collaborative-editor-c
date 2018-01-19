@@ -4,28 +4,35 @@
 #include "includes/prepares.h"
 #include "includes/bindings.h"
 
-typedef struct Costam {
-    GtkEntry *server_ip;
-    GtkEntry *server_port;
+void display_login_window(WindowsAndConnection *windowsAndConnection) {
+    GtkBuilder *builder;
 
-    GtkWidget *login_window;
-    GtkWidget *editor_window;
-} Costam;
+    builder = gtk_builder_new();
+    gtk_builder_add_from_file(builder, "./../app/login_window_design.glade", NULL);
 
-int syncing = FALSE;
+    windowsAndConnection->login_window = GTK_WIDGET(gtk_builder_get_object(builder, "login_window"));
 
+    windowsAndConnection->server_ip   = GTK_ENTRY(gtk_builder_get_object(builder, "server_ip"));
+    windowsAndConnection->server_port = GTK_ENTRY(gtk_builder_get_object(builder, "server_port"));
+    GtkButton *connect_button = GTK_BUTTON(gtk_builder_get_object(builder, "connect"));
 
-void on_window_main_destroy() {
-    gtk_main_quit();
+    gtk_builder_connect_signals(builder, NULL);
+    g_signal_connect(connect_button, "clicked", G_CALLBACK(on_client_connect), windowsAndConnection);
+
+    g_object_unref(builder);
+
+    gtk_widget_show(windowsAndConnection->login_window);
+    gtk_main();
 }
 
-void display_editor_window(Costam *costam) {
+void display_editor_window(WindowsAndConnection *windowsAndConnection) {
     int serverSocket = connectToServer(
-        gtk_entry_get_text(costam->server_ip),
-        atoi(gtk_entry_get_text(costam->server_port)));
+        gtk_entry_get_text(windowsAndConnection->server_ip),
+        atoi(gtk_entry_get_text(windowsAndConnection->server_port))
+    );
 
-    costam->editor_window = prepareWindow("Collaborative editor");
-    GtkWidget   *vbox    = prepareVerticalBox(costam->editor_window);
+    windowsAndConnection->editor_window = prepareWindow("Collaborative editor");
+    GtkWidget   *vbox    = prepareVerticalBox(windowsAndConnection->editor_window);
     GtkWidget   *toolbar = prepareToolbar();
     GtkToolItem *exit    = prepareExitButton(toolbar);
 
@@ -35,11 +42,12 @@ void display_editor_window(Costam *costam) {
     GtkTextBuffer *buffer    = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textView));
     GtkWidget     *statusbar = prepareStatusBar(vbox);
 
+    gtk_widget_show_all(windowsAndConnection->editor_window);
+
     TextBufferData *data = malloc(sizeof(TextBufferData));
     data->statusbar    = statusbar;
-//    data->textBuffer   = buffer;
     data->serverSocket = &serverSocket;
-    bindEventListeners(costam->editor_window, exit, buffer, data);
+    bindEventListeners(windowsAndConnection->editor_window, exit, buffer, data);
 
     struct TextViewWithSocket *textViewWithSocket = malloc(sizeof(struct TextViewWithSocket));
     textViewWithSocket->textBuffer   = buffer;
@@ -49,54 +57,25 @@ void display_editor_window(Costam *costam) {
     eventLoops(textViewWithSocket);
 }
 
-void *on_client_connect(GtkButton * button, Costam * costam) {
-    printf("Connecting to ip: %s, port: %s",
-           gtk_entry_get_text(costam->server_ip),
-           gtk_entry_get_text(costam->server_port));
-
-    gtk_widget_hide(costam->login_window);
-    syncing = TRUE;
-    gtk_widget_show_all(costam->editor_window);
-}
-
-void display_login_window(Costam *costam) {
-    GtkBuilder *builder;
-
-    builder = gtk_builder_new();
-    gtk_builder_add_from_file(builder, "./../app/login_window_design.glade", NULL);
-
-    costam->login_window = GTK_WIDGET(gtk_builder_get_object(builder, "login_window"));
-
-    costam->server_ip   = GTK_ENTRY(gtk_builder_get_object(builder, "server_ip"));
-    costam->server_port = GTK_ENTRY(gtk_builder_get_object(builder, "server_port"));
-    GtkButton *connect_button = GTK_BUTTON(gtk_builder_get_object(builder, "connect"));
-
-    gtk_builder_connect_signals(builder, NULL);
-    g_signal_connect(connect_button, "clicked", G_CALLBACK(on_client_connect), costam);
-
-    g_object_unref(builder);
-
-    gtk_widget_show(costam->login_window);
+WindowsAndConnection *initWindowsAndConnection() {
+    WindowsAndConnection * windowsAndConnection = malloc(sizeof(WindowsAndConnection));
+    windowsAndConnection->server_ip = malloc(sizeof(GtkEntry));
+    windowsAndConnection->server_port = malloc(sizeof(GtkEntry));
+    windowsAndConnection->login_window = malloc(sizeof(GtkWidget));
+    windowsAndConnection->editor_window = malloc(sizeof(GtkWidget));
+    
+    return windowsAndConnection;
 }
 
 int main(int argc, char *argv[]) {
-//    g_thread_init(NULL);
     gtk_init(&argc, &argv);
 
-    Costam * costam = malloc(sizeof(Costam));
-    costam->server_ip = malloc(sizeof(GtkEntry));
-    costam->server_port = malloc(sizeof(GtkEntry));
-    costam->login_window = malloc(sizeof(GtkWidget));
-    costam->editor_window = malloc(sizeof(GtkWidget));
+    WindowsAndConnection *windowsAndConnection = initWindowsAndConnection();
 
-    display_login_window(costam);
-    display_editor_window(costam);
+    display_login_window(windowsAndConnection);
+    display_editor_window(windowsAndConnection);
 
     return 0;
-}
-
-void *gtkListener() {
-    gtk_main();
 }
 
 static gboolean resolveIncomingMessage(struct TextViewWithSocket *textViewWithSocket) {
@@ -106,31 +85,15 @@ static gboolean resolveIncomingMessage(struct TextViewWithSocket *textViewWithSo
     GtkTextIter start, end;
     message_t *message = textViewWithSocket->lastReceivedMessage;
 
-//    if (onChangeSignalId != NULL) unbindOnChangeSendModifiedLinesToServer(textViewWithSocket->textBuffer);
-
     switch (message->type) {
         case FINISHED_SENDING_DATA:
-//            bindOnChangeSendModifiedLinesToServer(textViewWithSocket->textBuffer, textViewWithSocket->bufferData);
             isServerSendingData = 0;
             break;
         case LINE_ADDED:
             printf("LINE_ADDED:%d:`%s`\n", message->row, message->text);
-//            if(1) {}
-//            char tmp[sizeof(message->text)+1];
-//            if (gtk_text_buffer_get_line_count(textViewWithSocket->textBuffer) < (message->row +1)) {
-//                getBoundsOfLine(textViewWithSocket->textBuffer, message->row - 1, &start, &end);
-//                strcpy(tmp, "\n");
-//                strcat(tmp, message->text);
-//            } else {
-//                gtk_text_iter_set_line(&end, message->row);
-//            }
-//            gtk_text_buffer_insert(textViewWithSocket->textBuffer, &end, tmp, strlen(message->text)+1);
-
-//            gtk_text_buffer_get_iter_at_line(textViewWithSocket->textBuffer, &start, message->row);
             getBoundsOfLine(textViewWithSocket->textBuffer, message->row - 1, &start, &end);
             gtk_text_buffer_insert(textViewWithSocket->textBuffer, &end, "\n ", 2);
             getBoundsOfLine(textViewWithSocket->textBuffer, message->row, &start, &end);
-//            gtk_text_buffer_get_iter_at_line(textViewWithSocket->textBuffer, &end, message->row);
             gtk_text_buffer_insert(textViewWithSocket->textBuffer, &start, message->text, strlen(message->text));
 
             break;
@@ -142,7 +105,6 @@ static gboolean resolveIncomingMessage(struct TextViewWithSocket *textViewWithSo
             break;
         case LINE_MODIFIED:
             printf("LINE_MODIFIED:%d:`%s`\n", message->row, message->text);
-//            gtk_text_buffer_get_iter_at_line(textViewWithSocket->textBuffer, &start, message->row);
 
             getBoundsOfLine(textViewWithSocket->textBuffer, message->row, &start, &end);
             gtk_text_buffer_delete(textViewWithSocket->textBuffer, &start, &end);
@@ -154,7 +116,6 @@ static gboolean resolveIncomingMessage(struct TextViewWithSocket *textViewWithSo
         default: break;
     }
 
-//    g_free(textViewWithSocket);
     G_UNLOCK(lockParsingIncomingMessage);
 
     return G_SOURCE_REMOVE;
@@ -166,38 +127,25 @@ void *incomingMessageListener(void *threadContext) {
     textViewWithSocket = (struct TextViewWithSocket *) threadContext;
     textViewWithSocket->lastReceivedMessage = malloc(sizeof(message_t));
 
-//    for (int i = 0; i < LINES_LIMIT; i++) {
-//        strcpy(textViewWithSocket->lines[i], "");
-//    }
-
     while (TRUE) {
-//        if (!syncing) {
-//            g_usleep(1000);
-//            continue;
-//        }
-
         size_t messageSize   = sizeof(message_t);
         char   *socketBuffer = malloc(messageSize);
 
-//        if (onChangeSignalId == 0/* && !isBusy*/) {
-//            bindOnChangeSendModifiedLinesToServer(textViewWithSocket->textBuffer, textViewWithSocket->bufferData);
-//        }
-
         if (recv(textViewWithSocket->clientSocket, socketBuffer, messageSize, NULL) != -1) {
             if (!lockParsingIncomingMessage) {
-//            message_t receivedMessage; then: memcpy(&receivedMessage...
                 memcpy(textViewWithSocket->lastReceivedMessage, socketBuffer, messageSize);
 
-                g_usleep(3*1000); // TODO: tak działa, ale ten lock na górze coś nie bardzo
+                g_usleep(3*1000);
                 lastCollaborator = textViewWithSocket->lastReceivedMessage->lastCollaborator;
                 getCursorStatus(textViewWithSocket->textBuffer);
                 gdk_threads_add_idle(resolveIncomingMessage, textViewWithSocket);
             }
-//            resolveIncomingMessage(&receivedMessage, textViewWithSocket);
         }
     }
+}
 
-    free(textViewWithSocket);
+void *gtkListener() {
+    gtk_main();
 }
 
 void eventLoops(struct TextViewWithSocket *textViewWithSocket) {
@@ -205,10 +153,10 @@ void eventLoops(struct TextViewWithSocket *textViewWithSocket) {
 
     //starting the thread
     pthread_create(&thread[0], NULL, gtkListener, NULL);
-    for (int i = 0; i <= 100000000; i++);
+    g_usleep(10*1000);
     pthread_create(&thread[1], NULL, incomingMessageListener, textViewWithSocket);
-//
-//    //waiting for completion
+
+    //waiting for completion
     pthread_join(thread[0], NULL);
     pthread_join(thread[1], NULL);
 }

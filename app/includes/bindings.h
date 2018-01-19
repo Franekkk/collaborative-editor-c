@@ -1,11 +1,6 @@
 #include <gtk/gtk.h>
 #include "text_buffer_handler.h"
 
-typedef struct BindingData {
-    GtkWidget *statusbar;
-    int       *serverSocket;
-} BindingData;
-
 struct TextViewWithSocket {
     GtkTextBuffer* textBuffer;
     TextBufferData* bufferData;
@@ -46,6 +41,15 @@ void bindOnBufferChanged(GtkTextBuffer *buffer, TextBufferData *data) {
 
 void initStatusBar(GtkTextBuffer *buffer, TextBufferData *data) {
     updateStatusbar(buffer, GTK_STATUSBAR(data->statusbar));
+}
+
+void *on_client_connect(GtkButton * button, WindowsAndConnection * windowsAndConnection) {
+    printf("Connecting to ip: %s, port: %s",
+           gtk_entry_get_text(windowsAndConnection->server_ip),
+           gtk_entry_get_text(windowsAndConnection->server_port));
+
+    gtk_widget_hide(windowsAndConnection->login_window);
+    gtk_main_quit();
 }
 
 void bindEventListeners(
