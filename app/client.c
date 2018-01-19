@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
 }
 
 static gboolean resolveIncomingMessage(struct TextViewWithSocket *textViewWithSocket) {
-    G_LOCK(lockParsingIncomingMessage); // TODO: a gówno to dało
+    G_LOCK(lockParsingIncomingMessage);
     isServerSendingData = 1;
 
     GtkTextIter start, end;
