@@ -20,5 +20,5 @@ ADD_EXECUTABLE(client  app/includes/client.h app/includes/prepares.h app/include
 ADD_EXECUTABLE(server app/includes/text_handler.h app/includes/common.h app/server.c)
 
 # Link the target to the GTK+ libraries
-TARGET_LINK_LIBRARIES(client ${GTK3_LIBRARIES} -lpthread)
+TARGET_LINK_LIBRARIES(client ${GTK3_LIBRARIES} -lpthread -rdynamic)
 #TARGET_LINK_LIBRARIES(version ${GTK3_LIBRARIES})
