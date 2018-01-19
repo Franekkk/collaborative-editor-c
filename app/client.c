@@ -128,6 +128,7 @@ void *incomingMessageListener(void *threadContext) {
     textViewWithSocket->lastReceivedMessage = malloc(sizeof(message_t));
 
     while (TRUE) {
+        g_usleep(3*1000);
         size_t messageSize   = sizeof(message_t);
         char   *socketBuffer = malloc(messageSize);
 
@@ -135,7 +136,6 @@ void *incomingMessageListener(void *threadContext) {
             if (!lockParsingIncomingMessage) {
                 memcpy(textViewWithSocket->lastReceivedMessage, socketBuffer, messageSize);
 
-                g_usleep(3*1000);
                 lastCollaborator = textViewWithSocket->lastReceivedMessage->lastCollaborator;
                 getCursorStatus(textViewWithSocket->textBuffer);
                 gdk_threads_add_idle(resolveIncomingMessage, textViewWithSocket);

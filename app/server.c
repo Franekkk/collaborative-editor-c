@@ -249,7 +249,7 @@ void event_loop(struct CollaborativeEditorServer *server) {
 void initialize_text_content(struct CollaborativeEditorServer *server) {
     server->text = textInit();
 
-    textModifyLine(server->text, 0, "0. .");
+    textModifyLine(server->text, 0, " ");
     textAddNewLine(server->text, 1, "1. Lorem Ipsum jest tekstem stosowanym jako przykładowy");
     textAddNewLine(server->text, 2, "2. wypełniacz w przemyśle poligraficznym. Został po raz");
     textAddNewLine(server->text, 3, "3. pierwszy użyty w XV w. przez nieznanego drukarza do");
