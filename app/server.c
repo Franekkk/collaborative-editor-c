@@ -254,16 +254,16 @@ void event_loop(struct CollaborativeEditorServer *server) {
 void initialize_text_content(struct CollaborativeEditorServer *server) {
     server->text = textInit();
 
-    textModifyLine(server->text, 0, ".");
-    textAddNewLine(server->text, 1, "Lorem Ipsum jest tekstem stosowanym jako przykładowy");
-    textAddNewLine(server->text, 2, "wypełniacz w przemyśle poligraficznym. Został po raz");
-    textAddNewLine(server->text, 3, "pierwszy użyty w XV w. przez nieznanego drukarza do");
-    textAddNewLine(server->text, 4, "wypełnienia tekstem próbnej książki. Pięć wieków");
-    textAddNewLine(server->text, 5, "później zaczął być używany przemyśle elektronicznym,");
-    textAddNewLine(server->text, 6, "pozostając praktycznie niezmienionym. Spopularyzował");
-    textAddNewLine(server->text, 7, "się w latach 60. XX w. wraz z publikacją arkuszy");
-    textAddNewLine(server->text, 8, "Letrasetu, zawierających fragmenty Lorem Ipsum, a");
-    textAddNewLine(server->text, 9, "ostatnio z zawierającym różne wersje Lorem Ipsum oprogramowaniem");
+    textModifyLine(server->text, 0, "0. .");
+    textAddNewLine(server->text, 1, "1. Lorem Ipsum jest tekstem stosowanym jako przykładowy");
+    textAddNewLine(server->text, 2, "2. wypełniacz w przemyśle poligraficznym. Został po raz");
+    textAddNewLine(server->text, 3, "3. pierwszy użyty w XV w. przez nieznanego drukarza do");
+    textAddNewLine(server->text, 4, "4. wypełnienia tekstem próbnej książki. Pięć wieków");
+    textAddNewLine(server->text, 5, "5. później zaczął być używany przemyśle elektronicznym,");
+    textAddNewLine(server->text, 6, "6. pozostając praktycznie niezmienionym. Spopularyzował");
+    textAddNewLine(server->text, 7, "7. się w latach 60. XX w. wraz z publikacją arkuszy");
+    textAddNewLine(server->text, 8, "8. Letrasetu, zawierających fragmenty Lorem Ipsum, a");
+    textAddNewLine(server->text, 9, "9. ostatnio z zawierającym różne wersje Lorem Ipsum oprogramowaniem");
 }
 
 int main(int argc, char *argv[]) {

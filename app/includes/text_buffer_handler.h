@@ -98,6 +98,13 @@ void sendModifiedLinesToServer(GtkTextBuffer *buffer, TextBufferData *data) {
         int linesDiff    = postCurrentCursorLine(buffer) - data->currentCursorLine;
         int startingLine = data->currentCursorLine;
 
+        if (linesDiff == 0 && gtk_text_buffer_get_line_count(buffer) < data->totalLines) {
+            linesDiff = gtk_text_buffer_get_line_count(buffer) - data->totalLines;
+            startingLine = min(postCurrentCursorLine(buffer), data->currentCursorLine) - linesDiff;
+
+            setCurrentCursorLine(buffer, data);
+        }
+
         enum MessageType type;
 
         int i = 0;
@@ -123,6 +130,7 @@ void sendModifiedLinesToServer(GtkTextBuffer *buffer, TextBufferData *data) {
         message_last.type = FINISHED_SENDING_DATA;
 
         sendMessageToServer(&message_last, *(data->serverSocket));
+        setCurrentCursorLine(buffer, data);
     }
 }
 
@@ -134,13 +142,17 @@ void updateStatusbar(GtkTextBuffer *buffer, GtkStatusbar *statusbar) {
     g_free(msg);
 }
 
-void
-setCurrentCursorLine(GtkTextBuffer *buffer, const GtkTextIter *new_location, GtkTextMark *mark, TextBufferData *data) {
+void setCurrentCursorLine(GtkTextBuffer *buffer, TextBufferData *data) {
     GtkTextIter start, end;
     data->currentCursorLine = (int) getCursorCords(buffer, &start)[0];
+    data->totalLines = (int) gtk_text_buffer_get_line_count(buffer);
 
     // TODO: handle selection
 //    gtk_text_buffer_get_selection_bounds(buffer, &start, &end);
 
     updateStatusbar(buffer, GTK_STATUSBAR(data->statusbar));
+}
+
+void setCurrentCursorLineHandler(GtkTextBuffer *buffer, const GtkTextIter *new_location, GtkTextMark *mark, TextBufferData *data) {
+    setCurrentCursorLine(buffer, data);
 }

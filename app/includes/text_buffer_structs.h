@@ -3,4 +3,5 @@ typedef struct TextBufferData {
     GtkWidget     *statusbar;
     int           *serverSocket;
     int           currentCursorLine;
+    int           totalLines;
 } TextBufferData;

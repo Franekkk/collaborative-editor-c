@@ -39,7 +39,7 @@ void unbindOnChangeSendModifiedLinesToServer(GtkTextBuffer *buffer) {
 
 void bindOnBufferChanged(GtkTextBuffer *buffer, TextBufferData *data) {
 
-    g_signal_connect(buffer, "mark_set", G_CALLBACK(setCurrentCursorLine), data);
+    g_signal_connect(buffer, "mark_set", G_CALLBACK(setCurrentCursorLineHandler), data);
     bindOnChangeSendModifiedLinesToServer(buffer, data);
 //    g_signal_connect_object(buffer, "mark_set", G_CALLBACK(mark_set_callback), data->statusbar, 0);
 }
