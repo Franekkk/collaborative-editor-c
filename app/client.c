@@ -4,27 +4,28 @@
 #include "includes/prepares.h"
 #include "includes/bindings.h"
 
-GtkEntry *server_ip;
-GtkEntry *server_port;
+typedef struct Costam {
+    GtkEntry *server_ip;
+    GtkEntry *server_port;
 
-GtkWidget *login_window;
-GtkWidget *editor_window;
+    GtkWidget *login_window;
+    GtkWidget *editor_window;
+} Costam;
 
 int syncing = FALSE;
 
 
-void on_window_main_destroy()
-{
+void on_window_main_destroy() {
     gtk_main_quit();
 }
 
-void display_editor_window() {
+void display_editor_window(Costam *costam) {
     int serverSocket = connectToServer(
-            gtk_entry_get_text(server_ip),
-            atoi(gtk_entry_get_text(server_port)));
+        gtk_entry_get_text(costam->server_ip),
+        atoi(gtk_entry_get_text(costam->server_port)));
 
-    editor_window  = prepareWindow("Collaborative editor");
-    GtkWidget   *vbox    = prepareVerticalBox(editor_window);
+    costam->editor_window = prepareWindow("Collaborative editor");
+    GtkWidget   *vbox    = prepareVerticalBox(costam->editor_window);
     GtkWidget   *toolbar = prepareToolbar();
     GtkToolItem *exit    = prepareExitButton(toolbar);
 
@@ -38,7 +39,7 @@ void display_editor_window() {
     data->statusbar    = statusbar;
 //    data->textBuffer   = buffer;
     data->serverSocket = &serverSocket;
-    bindEventListeners(editor_window, exit, buffer, data);
+    bindEventListeners(costam->editor_window, exit, buffer, data);
 
     struct TextViewWithSocket *textViewWithSocket = malloc(sizeof(struct TextViewWithSocket));
     textViewWithSocket->textBuffer   = buffer;
@@ -48,42 +49,48 @@ void display_editor_window() {
     eventLoops(textViewWithSocket);
 }
 
-void *on_client_connect() {
+void *on_client_connect(GtkButton * button, Costam * costam) {
     printf("Connecting to ip: %s, port: %s",
-           gtk_entry_get_text(server_ip),
-           gtk_entry_get_text(server_port));
+           gtk_entry_get_text(costam->server_ip),
+           gtk_entry_get_text(costam->server_port));
 
-    gtk_widget_hide(login_window);
+    gtk_widget_hide(costam->login_window);
     syncing = TRUE;
-    gtk_widget_show_all(editor_window);
+    gtk_widget_show_all(costam->editor_window);
 }
 
-void display_login_window() {
+void display_login_window(Costam *costam) {
     GtkBuilder *builder;
 
     builder = gtk_builder_new();
-    gtk_builder_add_from_file (builder, "./../app/login_window_design.glade", NULL);
+    gtk_builder_add_from_file(builder, "./../app/login_window_design.glade", NULL);
 
-    login_window = GTK_WIDGET(gtk_builder_get_object(builder, "login_window"));
+    costam->login_window = GTK_WIDGET(gtk_builder_get_object(builder, "login_window"));
 
-    server_ip = GTK_ENTRY(gtk_builder_get_object(builder, "server_ip"));
-    server_port = GTK_ENTRY(gtk_builder_get_object(builder, "server_port"));
+    costam->server_ip   = GTK_ENTRY(gtk_builder_get_object(builder, "server_ip"));
+    costam->server_port = GTK_ENTRY(gtk_builder_get_object(builder, "server_port"));
     GtkButton *connect_button = GTK_BUTTON(gtk_builder_get_object(builder, "connect"));
 
     gtk_builder_connect_signals(builder, NULL);
-    g_signal_connect(connect_button, "clicked", G_CALLBACK(on_client_connect), NULL);
+    g_signal_connect(connect_button, "clicked", G_CALLBACK(on_client_connect), costam);
 
     g_object_unref(builder);
 
-    gtk_widget_show(login_window);
+    gtk_widget_show(costam->login_window);
 }
 
 int main(int argc, char *argv[]) {
 //    g_thread_init(NULL);
     gtk_init(&argc, &argv);
 
-    display_login_window();
-    display_editor_window();
+    Costam * costam = malloc(sizeof(Costam));
+    costam->server_ip = malloc(sizeof(GtkEntry));
+    costam->server_port = malloc(sizeof(GtkEntry));
+    costam->login_window = malloc(sizeof(GtkWidget));
+    costam->editor_window = malloc(sizeof(GtkWidget));
+
+    display_login_window(costam);
+    display_editor_window(costam);
 
     return 0;
 }
@@ -164,10 +171,10 @@ void *incomingMessageListener(void *threadContext) {
 //    }
 
     while (TRUE) {
-        if (!syncing) {
-            g_usleep(1000);
-            continue;
-        }
+//        if (!syncing) {
+//            g_usleep(1000);
+//            continue;
+//        }
 
         size_t messageSize   = sizeof(message_t);
         char   *socketBuffer = malloc(messageSize);
