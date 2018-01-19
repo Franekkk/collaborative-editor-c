@@ -1,7 +1,8 @@
 typedef struct Message {
     int type;
     int row;
-    char text[200];
+    char text[255];
+    int lastCollaborator;
 } message_t;
 
 typedef enum MessageType {

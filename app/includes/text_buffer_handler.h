@@ -24,7 +24,7 @@ gchar *getCursorStatus(GtkTextBuffer *buffer) {
     gint row = cords[0];
     gint col = cords[1];
 
-    return g_strdup_printf("Col: %d Ln: %d", col + 1, row + 1);
+    return g_strdup_printf("%d:%d | Last Collaborator: #%d", col + 1, row + 1, lastCollaborator);
 }
 
 /**

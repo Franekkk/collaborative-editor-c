@@ -13,6 +13,7 @@
 extern int    clientIsWorking = TRUE;
 extern gulong onChangeSignalId = FALSE;
 extern int isServerSendingData = FALSE;
+extern int lastCollaborator = 0;
 
 G_LOCK_DEFINE_STATIC (lockParsingIncomingMessage);
 static volatile int lockParsingIncomingMessage = FALSE;

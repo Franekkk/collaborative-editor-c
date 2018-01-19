@@ -128,6 +128,8 @@ void *incomingMessageListener(void *threadContext) {
                 memcpy(textViewWithSocket->lastReceivedMessage, socketBuffer, messageSize);
 
                 g_usleep(3*1000); // TODO: tak działa, ale ten lock na górze coś nie bardzo
+                lastCollaborator = textViewWithSocket->lastReceivedMessage->lastCollaborator;
+                getCursorStatus(textViewWithSocket->textBuffer);
                 gdk_threads_add_idle(resolveIncomingMessage, textViewWithSocket);
             }
 //            resolveIncomingMessage(&receivedMessage, textViewWithSocket);

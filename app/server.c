@@ -145,6 +145,7 @@ void initial_synchronization(struct CollaborativeEditorServer *server, int clien
         strcpy(message.text, server->text->lines[i]);
         message.type = i == 0 ? LINE_MODIFIED : LINE_ADDED;
 
+        message.lastCollaborator = clientSocket;
         send_message(message, clientSocket);
     }
 
@@ -154,6 +155,7 @@ void initial_synchronization(struct CollaborativeEditorServer *server, int clien
     strcpy(message_last.text, "");
     message_last.type = FINISHED_SENDING_DATA;
 
+    message_last.lastCollaborator = clientSocket;
     send_message(message_last, clientSocket);
 }
 
@@ -221,7 +223,7 @@ void handle_client_socket_activity(
     resolveIncomingMessageFromClient(server, &received_message);
 
     // print_text(server);
-
+    received_message.lastCollaborator = client_socket;
     broadcast_message(server, received_message, socket_index);
 }
 
